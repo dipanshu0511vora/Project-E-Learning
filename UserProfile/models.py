@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
 # Create your models here.
 
 class Grade(models.Model):
@@ -8,7 +9,11 @@ class Grade(models.Model):
         ('2', 'Term 2'),
     ]
 
-    grade_number = models.IntegerField(null=False, blank=False)
+    grade_number = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
+        null=False, 
+        blank=False
+    )
     term = models.CharField(max_length=1, choices=Term_Choice)
 
     def __str__(self):
@@ -32,7 +37,7 @@ class Userprofile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, null=False, blank=False)
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE, null=True, blank=True)
     role = models.CharField(max_length=10, choices=User_Roles)
     admission_date = models.DateTimeField(auto_now_add=True)
 

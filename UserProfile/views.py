@@ -14,11 +14,23 @@ def grade_list(request):
         return Response(serializer.data)
 
     elif request.method == 'POST':
+        grade_number = request.data.get('grade_number')
+        term = request.data.get('term')
+        print("----------------0")
+
+        # Check if the grade and term combination already exists
+        if Grade.objects.filter(grade_number=grade_number, term=term).exists():
+            print("------------------1")
+            return Response({"error": "This grade and term combination already exists."})
+
         serializer = GradeSerializer(data=request.data)
         if serializer.is_valid():
+            print("----------------2")
             serializer.save()
+            print("------------------3")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def grade_detail(request, pk):
@@ -32,7 +44,14 @@ def grade_detail(request, pk):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
+        grade_number = request.data.get('grade_number')
+        term = request.data.get('term')
+        if Grade.objects.filter(grade_number=grade_number, term=term).exists():
+            print("------------------1")
+            return Response({"error": "This grade and term combination already exists so you cannot Edit."})
+       
         serializer = GradeSerializer(grade, data=request.data)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -40,7 +59,7 @@ def grade_detail(request, pk):
 
     elif request.method == 'DELETE':
         grade.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Grade deleted successfully."}, status=status.HTTP_200_OK)
 
 # Subjects Views
 @api_view(['GET', 'POST'])
@@ -53,10 +72,19 @@ def subjects_list(request):
     elif request.method == 'POST':
         serializer = SubjectsSerializer(data=request.data)
         if serializer.is_valid():
+            subject_name = serializer.validated_data['subject_name']
+            grade_id = serializer.validated_data['grade'].id
+            
+            # Check if the subject already exists for the given grade
+            if Subjects.objects.filter(subject_name=subject_name, grade_id=grade_id).exists():
+                return Response(
+                    {"error": "Subject with this name already exists for the given grade."})
+            
+            # If not, save the new subject
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
 @api_view(['GET', 'PUT', 'DELETE'])
 def subjects_detail(request, pk):
     try:
@@ -77,7 +105,9 @@ def subjects_detail(request, pk):
 
     elif request.method == 'DELETE':
         subject.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Subject deletion accepted."}, status=status.HTTP_202_ACCEPTED)
+
+
 
 # Userprofile Views
 @api_view(['GET', 'POST'])
@@ -114,7 +144,7 @@ def userprofile_detail(request, pk):
 
     elif request.method == 'DELETE':
         profile.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "User profile deleted successfully."}, status=status.HTTP_200_OK)
 
 # Video Views
 @api_view(['GET', 'POST'])
@@ -151,5 +181,6 @@ def video_detail(request, pk):
 
     elif request.method == 'DELETE':
         video.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": "Video deleted successfully."}, status=status.HTTP_200_OK)
+    
 
